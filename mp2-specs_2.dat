@@ -1,0 +1,133 @@
+* ECE 5362
+* Machine Problem 2
+* Nathan Fullerton
+
+** Start fetch cycle **
+ st=0 rt='[pc]-> mar'		imar rac=1 rn=3
+ st=1 rt='[[mar]]-> mdr'	read
+ st=2 rt='[mdr] -> ir'		omdr iir
+ st=3 rt='[pc]+1 -> q'		rac=1 rn=3 ib p1 oadder
+ st=4 rt='[q] -> pc'		oq wac=1 wn=3
+	cond='ir158' value=0 nst=10
+	cond='ir1512' value=4 nst=40
+	cond='ir118' value=4 nst=20
+	nst=10
+
+* If any instructions are present except HALT or NEG, a halt will occur.
+* Halt execution cycle *
+ st=10 halt
+
+* Neg execution cycle *
+ st=20 rt='[Rd] -> t2'		rac=3 it2
+ st=21 rt='[t2] -> t1'		ot2 it1
+** later, add jump for non-indirect modes
+	cond='ir64' value=3 nst=24
+	cond='ir64' value=2 nst=27
+	cond='ir64' value=1 nst=27
+* skip for register mode
+*	nst='negate'
+ st=22 rt='0-[Rn] -> q'		rac=3 ib comp p1 oadder newc newv
+ st=23 rt='[q] -> Rn'		oq wac=3 newz newn
+	nst=0
+** autodecrement
+ st=24 rt='[t1]-1 -> q'		oa comp oadder
+ st=25 rt='[q] -> t2'		oq it2
+ st=26 rt='[q] -> Rd'		oq wac=3
+ st=27 rt='[t2] -> mar'		ot2 imar
+ st=28 rt='[[mar]] -> mdr'	read
+ st=29 rt='0-[mdr] -> q'	omdr ib comp p1 oadder newc newv
+
+** indirect mode return
+ st=30 rt='[q] -> mdr'		oq imdr newn newz
+ st=31 rt='[mdr] -> [mar]'	write
+	cond='ir64' value=1 nst=0
+	cond='ir64' value=3 nst=0
+** autoincrement
+ st=32 rt='[t2] -> t1'		ot2 it1
+ st=33 rt='[t1]+1 -> q'		oa p1 oadder
+ st=34 rt='[q] -> Rn'		oq wac=3
+	nst=0
+
+** EXG execution cycle
+ st=40 rt='[Rd] -> t2'		rac=3 it2
+	cond='ir64' value=1 nst=46
+	cond='ir64' value=2 nst=46
+	cond='ir64' value=3 nst=42
+** Register dest
+ st=41 rt='[t2] -> t3'		ot2 it3
+	nst=49
+** Autodec dest
+ st=42 rt='[t2] -> t1'		it1 ot2
+ st=43 rt='[t1]-1 -> q'		oa comp oadder
+ st=44 rt='[q] -> t2'		oq it2
+ st=45 rt='[q] -> Rd'		oq wac=3
+** Indirect
+ st=46 rt='[t2] -> mar'		ot2 imar
+ st=47 rt='[[mar]] -> mdr'	read
+ st=48 rt='[mdr] -> t3'		omdr it3
+
+** get src
+ st=49 rt='[Rs] -> t4'		rac=2 it4
+	cond='ir108' value=1 nst=55
+	cond='ir108' value=2 nst=55
+	cond='ir108' value=3 nst=51
+ st=50 rt='[t4] -> t5'		ot4 it5
+	cond='ir108' value=1 nst=59
+	cond='ir108' value=2 nst=59
+	cond='ir108' value=3 nst=59
+	nst=58
+*	nst='exg' so two conditional jumps
+** autodec
+ st=51 rt='[t4] -> t1'		ot4 it1
+ st=52 rt='[t1]-1 -> q'		oa oadder comp
+ st=53 rt='[q] -> t4'		oq it4
+ st=54 rt='[q] -> Rs'		oq wac=2
+** indirect
+ st=55 rt='[t4] -> mar'		ot4 imar
+ st=56 rt='[[mar]] -> mdr'	read
+ st=57 rt='[mdr] -> t5'		omdr it5
+	cond='ir108' value=1 nst=59
+	cond='ir108' value=2 nst=59
+	cond='ir108' value=3 nst=59
+*	nst='exg' so conditional jump
+
+** exg src
+** register mode
+ st=58 rt='[t3] -> Rs'		ot3 wac=2
+	cond='ir64' value=1 nst=62
+	cond='ir64' value=2 nst=62
+	cond='ir64' value=3 nst=62
+	nst=61
+*	nst='exg dest so tw'
+*** remember mar has source already
+ st=59 rt='[t3] -> mdr'		ot3 imdr
+ st=60 rt='[mdr] -> [mar]'	write
+	cond='ir108' value=2 nst=65
+	cond='ir64' value=1 nst=62
+	cond='ir64' value=2 nst=62
+	cond='ir64' value=3 nst=62
+	nst=61
+*	nst='exg dest so two jumps'
+** exg dst
+** register mode
+ st=61 rt='[t5] -> Rd'		ot5 wac=3
+	nst=0
+** indirect/autodec
+ st=62 rt='[t5] -> mdr'		ot5 imdr
+ st=63 rt='[t2] -> mar'		ot2 imar
+ st=64 rt='[mdr] -> [mar]'	write
+	cond='ir64' value=2 nst=68
+	nst=0
+** autoinc src
+ st=65 rt='[t4] -> t1'		ot4 it1
+ st=66 rt='[t1]+1 -> q'		oa p1 oadder
+ st=67 rt='[q] -> Rs'		oq wac=2
+	cond='ir64' value=2 nst=62
+	cond='ir64' value=1 nst=62
+	cond='ir64' value=3 nst=62
+	nst=61
+** autoinc dest
+ st=68 rt='[t2] -> t1'		ot2 it1
+ st=69 rt='[t1]+1 -> q'		oa p1 oadder
+ st=70 rt='[q] -> Rd'		oq wac=3
+	nst=0
