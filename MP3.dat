@@ -68,34 +68,38 @@
 *	note: no immediate in dest, so only need include absolute. yay
 *	also in case of absolute, above line is irreleven but catches src up
 	cond='ir64' value=5 nst=34
-	cond='ir64' value=0 nst=43
-* potential autoincrement
+	cond='ir64' value=0 nst=46
+* potential autodecrement
 	cond='ir64' value=3 nst=31
+	cond='ir64' value=4 nst=34
 	nst=dest_mar
- st=31 rt='[T4] -> T1'			ot4 it1
- st=32 rt='[T1] - 1 -> q'		oa comp p1 oadder
+ st=31 rt='[T4] -> T1'				ot4 it1
+ st=32 rt='[T1] - 1 -> q'			oa comp p1 oadder
  st=33 rt='[q] -> Rdest, T4'		oq wac=3 it4
 *post autodec
 	nst=dest_mar
-*get absolute
- st=34 rt='[pc]-> mar'		imar rac=1 rn=3
- st=35 rt='[[mar]]-> mdr'	read
- st=36 rt='[mdr] -> T1'		omdr it1
-	cond='ir64' value=4 nst=38
- st=37 rt='[mdr] -> T4'		omdr it4
- st=38 rt='[pc]+1 -> q'		rac=1 rn=3 ib p1 oadder
- st=39 rt='[q] -> pc'		oq wac=1 wn=3
+*get absolute/index
+ st=34 rt='[pc]-> mar'				imar rac=1 rn=3
+ st=35 rt='[[mar]]-> mdr'			read
+ st=36 rt='[mdr] -> T1'				omdr it1
+ st=37 rt='[pc]+1 -> q'				rac=1 rn=3 ib p1 oadder
+ st=38 rt='[q] -> pc'				oq wac=1 wn=3
+ 	cond='ir64' value=4 nst=40
+ st=39 rt='[mdr] -> T4'				omdr it4
+	nst=42
 
 * index
+ st=40 rt='[T1] + [T4] -> q'		oa ib ot4 oadder
+ st=41 rt='[q] -> T4'				oq it4
 
 * put dest into mar and t1 for autoinc
- st=40 rt='[T4] -> mar, T1'	ot4 it1 imar
- st=41 rt='[[mar]]->mdr, [T4] + 1 -> q'		read oa oadder p1 
- st=42 rt='[mdr] -> T5'		omdr it5
-	cond='ir64' value=2 nst=43
-	nst=dest_end
-* autoinc
- st=43 rt='[q] -> Rdest'	oq wac=3
+ st=42 rt='[T4] -> mar, T1'	ot4 it1 imar
+ st=43 rt='[[mar]]->mdr, [T1] + 1 -> q'		read oa oadder p1 
+ st=44 rt='[mdr] -> T5'		omdr it5
+	cond='ir64' value=2 nst=45
+	nst=46
+* autoinc (the increment was done sneakily in state 42 and 43)
+ st=45 rt='[q] -> Rdest'	oq wac=3
 
 *******************************************
 *        We now have our DEST var         *
@@ -103,4 +107,4 @@
 *******************************************
 
 *end of dest, NOP to gather different paths so all next step conditions are centralized
- st=43 rt='NOP'				ot2
+ st=46 rt='NOP'				ot2
