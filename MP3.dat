@@ -85,12 +85,12 @@
 * potential autodecrement
 	cond='ir64' value=3 nst=31
 	cond='ir64' value=4 nst=34
-	nst=dest_mar
+	nst=42
  st=31 rt='[T4] -> T1'				ot4 it1
  st=32 rt='[T1] - 1 -> q'			oa comp oadder
  st=33 rt='[q] -> Rdest, T4'		oq wac=3 it4
 *post autodec
-	nst=dest_mar
+	nst=42
 *get absolute/index
  st=34 rt='[pc]-> mar'				imar rac=1 rn=3
  st=35 rt='[[mar]]-> mdr'			read
@@ -129,8 +129,8 @@
 	cond='ir1512' value=4 nst=70
 
  st=47 rt='NOP'				ot2
- * Place IR conditional jumps for single operand
- *	Neg
+* Place IR conditional jumps for single operand
+*	Neg
 	cond='ir118' value=4 nst=75
 
 *******************************************
