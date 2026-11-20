@@ -238,7 +238,7 @@
  st=89 rt='[PC] -> MDR'					rac=1 rn=3 imdr
  st=90 rt='[MDR] -> [MAR]'				write
  st=91 rt='[T4] -> PC'					ot4 wac=1 wn=3
- ** no need to write to dst, jump to next instruction directly
+** no need to write to dst, jump to next instruction directly
 	nst=0
 	
 
