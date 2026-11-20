@@ -1,6 +1,14 @@
 * ECE 5362
-* Machine Problem 2
+* Machine Problem 3
 * Nathan Fullerton
+
+***********************************
+* Important layout considerations *
+* SRC: T2=addr, T3=value          *
+* DST: T4=addr, T5=value          *
+* nst=50 -- sets SRC and DST      *
+* nst=55 -- sets DST              *
+***********************************
 
 ** Start fetch cycle **
  st=0 rt='[pc]-> mar'		imar rac=1 rn=3
@@ -9,8 +17,13 @@
  st=3 rt='[pc]+1 -> q'		rac=1 rn=3 ib p1 oadder
  st=4 rt='[q] -> pc'		oq wac=1 wn=3
 
-*	skip source calc if single operand operation
+* Jumps for special instructions
+	cond='ir158' value=0 nst=59
+
+* Jump for single-operand instructions
 	cond='ir1512' value=0 nst=30
+
+* Continue for double-operand instructions
 ** Get source and store addr in T2 and val in T3 **
 *	check source address type
 	cond='ir118' value=5 nst=12
@@ -20,7 +33,7 @@
 	cond='ir118' value=0 nst=30
 	nst=8
 *	potential autodecrement
- st=6 rt='[T1] - 1 -> q'		oa oadder comp p1
+ st=6 rt='[T1] - 1 -> q'		oa oadder comp
  st=7 rt='[q] -> Rsrc'			oq wac=2
 	nst=9
 * skip autodec
@@ -74,7 +87,7 @@
 	cond='ir64' value=4 nst=34
 	nst=dest_mar
  st=31 rt='[T4] -> T1'				ot4 it1
- st=32 rt='[T1] - 1 -> q'			oa comp p1 oadder
+ st=32 rt='[T1] - 1 -> q'			oa comp oadder
  st=33 rt='[q] -> Rdest, T4'		oq wac=3 it4
 *post autodec
 	nst=dest_mar
@@ -97,9 +110,11 @@
  st=43 rt='[[mar]]->mdr, [T1] + 1 -> q'		read oa oadder p1 
  st=44 rt='[mdr] -> T5'		omdr it5
 	cond='ir64' value=2 nst=45
+	cond='ir1512' value=0 nst=47
 	nst=46
 * autoinc (the increment was done sneakily in state 42 and 43)
  st=45 rt='[q] -> Rdest'	oq wac=3
+	cond='ir1512' value=0 nst=47
 
 *******************************************
 *        We now have our DEST var         *
@@ -108,3 +123,73 @@
 
 *end of dest, NOP to gather different paths so all next step conditions are centralized
  st=46 rt='NOP'				ot2
+
+* Place IR conditional jumps for double operand
+*	Exg
+	cond='ir1512' value=4 nst=70
+
+ st=47 rt='NOP'				ot2
+ * Place IR conditional jumps for single operand
+ *	Neg
+	cond='ir118' value=4 nst=75
+
+*******************************************
+*          Write T3 back to SRC           *
+*******************************************
+
+* note: because of the ability to use absolute addressing,
+* We must assume T2 can contain an address
+* To begin, move T2 to MAR. If register mode, this is harmless
+* If this gets run when there was an immediate value, that is the fault of the implementer
+*	(also that is an unsupported operation so the programmer messed up)
+
+ st=50 rt='[T2] -> MAR'				ot2 imar
+	cond='ir118' value=0 nst=53
+ st=51 rt='[T3] -> MDR'				ot3 imdr
+ st=52 rt='[MDR] -> [MAR]'			write
+*	written to memory, now just jump to dest
+	nst=55
+ st=53 rt='[T3] -> Rsrc'			ot3 wac=2
+*	similar jump to dest
+	nst=55
+
+*******************************************
+*          Write T5 back to DEST          *
+*******************************************
+
+ st=55 rt='[T4] -> MAR'				ot4 imar
+	cond='ir64' value=0 nst=58
+ st=56 rt='[T5] -> MDR'				ot5 imdr
+ st=57 rt='[MDR] -> [MAR]'			write
+* written to memory, now just jump to uh I guess start of program
+	nst=0
+ st=58 rt='[T5] -> Rdst'			ot5 wac=3
+	nst=0
+
+*********************************************
+* Special Instruction Handling
+* All IR sent here have 0000 0000 xxxx xxxx
+
+ st=59 rt='nop'						ot2
+	cond='ir76' value=0 nst=60
+*	cond='ir76' value=8 nst=RST
+ st=60 halt
+
+***********************************************
+* Main Instructions
+
+*************************
+*          EXG          *
+*************************
+
+ st=70 rt='[T3] -> q'		ot3 ib oadder
+ st=71 rt='[T5] -> T3'		ot5 it3
+ st=72 rt='[q] -> T5'		oq it5
+	nst=50
+
+*************************
+*          NEG          *
+*************************
+ st=75 rt='0-[T5] -> q'					ot5 ib comp p1 oadder NEWC NEWV
+ st=76 rt='[q] -> T5'					oq it5 NEWZ NEWN
+	nst=55
