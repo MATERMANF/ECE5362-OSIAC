@@ -134,10 +134,12 @@
 
  st=47 rt='NOP'				ot2
 * Place IR conditional jumps for single operand
+*	INC
+	cond='ir118' value=2 nst=84
 *	Neg
 	cond='ir118' value=4 nst=75
-*	INC
-	cond='ir118' value=2 nst=83
+*	JSR
+	cond='ir118' value=7 nst=86
 
 *******************************************
 *          Write T3 back to SRC           *
@@ -213,25 +215,29 @@
 *************************
  st=80 rt='[T5] -> T1'					ot5 it1
  st=81 rt='[T1] - [T3] -> q'			oa ib ot3 comp p1 oadder NEWC NEWV
- st=82 rt='[q] -> T5'					oq it5 NEWZ NEWN
+	cond='cout' value=1 nst=83
+* because subtract wants C flag to be "borrow" not "carryout", have to invert it.. fun
+ st=82 rt='[q] -> T5'					oq it5 NEWZ NEWN SETC
+	nst=55
+ st=83 rt='[q] -> T5'					oq it5 NEWZ NEWN CLRC
 	nst=55
 
 *************************
 *          INC          *
 *************************
- st=83 rt='[T5] + 1 -> q'				ot5 ib p1 oadder NEWC NEWV
- st=84 rt='[q] -> T5'					oq it5 NEWZ NEWN
+ st=84 rt='[T5] + 1 -> q'				ot5 ib p1 oadder NEWC NEWV
+ st=85 rt='[q] -> T5'					oq it5 NEWZ NEWN
 	nst=55
 
 *************************
 *          JSR          *
 *************************
- st=85 rt='[SP] -> T1'					rac=1 rn=2 it1
- st=86 rt='[T1]-1 -> q'					oa comp oadder
- st=87 rt='[q] -> SP, MAR'				oq wac=1 wn=2, imar
- st=88 rt='[PC] -> MDR'					rac=1 rn=3 imdr
- st=89 rt='[MDR] -> [MAR]'				write
- st=90 rt='[T5] -> PC'					ot5 wac=1 wn=3
+ st=86 rt='[SP] -> T1'					rac=1 rn=2 it1
+ st=87 rt='[T1]-1 -> q'					oa comp oadder
+ st=88 rt='[q] -> SP, MAR'				oq wac=1 wn=2 imar
+ st=89 rt='[PC] -> MDR'					rac=1 rn=3 imdr
+ st=90 rt='[MDR] -> [MAR]'				write
+ st=91 rt='[T4] -> PC'					ot4 wac=1 wn=3
  ** no need to write to dst, jump to next instruction directly
 	nst=0
 	
