@@ -193,3 +193,5 @@
  st=75 rt='0-[T5] -> q'					ot5 ib comp p1 oadder NEWC NEWV
  st=76 rt='[q] -> T5'					oq it5 NEWZ NEWN
 	nst=55
+
+* end of file, put here to prevent issues with the program incorrectly skipping the last line
