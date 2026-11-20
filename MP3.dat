@@ -125,6 +125,10 @@
  st=46 rt='NOP'				ot2
 
 * Place IR conditional jumps for double operand
+*	Add
+	cond='ir1512' value=1 nst=77
+*	Sub
+	cond='ir1512' value=2 nst=80
 *	Exg
 	cond='ir1512' value=4 nst=70
 
@@ -132,6 +136,8 @@
 * Place IR conditional jumps for single operand
 *	Neg
 	cond='ir118' value=4 nst=75
+*	INC
+	cond='ir118' value=2 nst=83
 
 *******************************************
 *          Write T3 back to SRC           *
@@ -193,5 +199,41 @@
  st=75 rt='0-[T5] -> q'					ot5 ib comp p1 oadder NEWC NEWV
  st=76 rt='[q] -> T5'					oq it5 NEWZ NEWN
 	nst=55
+
+*************************
+*          ADD          *
+*************************
+ st=77 rt='[T3] -> T1'					ot3 it1
+ st=78 rt='[T1] + [T5] -> q'			oa ib ot5 oadder NEWC NEWV
+ st=79 rt='[q] -> T5'					oq it5 NEWZ NEWN
+	nst=55
+
+*************************
+*          SUB          *
+*************************
+ st=80 rt='[T5] -> T1'					ot5 it1
+ st=81 rt='[T1] - [T3] -> q'			oa ib ot3 comp p1 oadder NEWC NEWV
+ st=82 rt='[q] -> T5'					oq it5 NEWZ NEWN
+	nst=55
+
+*************************
+*          INC          *
+*************************
+ st=83 rt='[T5] + 1 -> q'				ot5 ib p1 oadder NEWC NEWV
+ st=84 rt='[q] -> T5'					oq it5 NEWZ NEWN
+	nst=55
+
+*************************
+*          JSR          *
+*************************
+ st=85 rt='[SP] -> T1'					rac=1 rn=2 it1
+ st=86 rt='[T1]-1 -> q'					oa comp oadder
+ st=87 rt='[q] -> SP, MAR'				oq wac=1 wn=2, imar
+ st=88 rt='[PC] -> MDR'					rac=1 rn=3 imdr
+ st=89 rt='[MDR] -> [MAR]'				write
+ st=90 rt='[T5] -> PC'					ot5 wac=1 wn=3
+ ** no need to write to dst, jump to next instruction directly
+	nst=0
+	
 
 * end of file, put here to prevent issues with the program incorrectly skipping the last line
